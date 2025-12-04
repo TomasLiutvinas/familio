@@ -1,0 +1,14 @@
+<?php
+
+namespace App\Filament\Resources\Subscriptions\Pages;
+
+use App\Filament\Resources\Subscriptions\SubscriptionResource;
+use App\Filament\Traits\HasPrimaryDeleteAction;
+use Filament\Resources\Pages\EditRecord;
+
+class EditSubscription extends EditRecord
+{
+    use HasPrimaryDeleteAction;
+
+    protected static string $resource = SubscriptionResource::class;
+}

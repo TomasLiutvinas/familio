@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background circle with gradient -->
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#991b1b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7f1d1d;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Circle background -->
+  <circle cx="50" cy="50" r="48" fill="url(#grad)" stroke="#450a0a" stroke-width="2"/>
+
+  <!-- Letter F -->
+  <text x="50" y="50" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="#e5e5e5" text-anchor="middle" dominant-baseline="central">F</text>
+
+  <!-- Small heart accent -->
+  <path d="M 75 25 C 75 20, 72 18, 70 18 C 68 18, 66 19, 65 21 C 64 19, 62 18, 60 18 C 58 18, 55 20, 55 25 C 55 28, 65 35, 65 35 C 65 35, 75 28, 75 25 Z" fill="#dc2626" opacity="0.7"/>
+</svg>
