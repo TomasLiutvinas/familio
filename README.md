@@ -10,6 +10,10 @@
 
 Just a convenient thing I made to keep up with family subscriptions ^^
 
+
+Note for trying to host this in cloud: if using turso its not easy to host because php ffi extension needs to be enabled for `turso/libsql-laravel` :(
+If using other db provider, you might need to remove `turso/libsql-laravel` but maybe not, only one way to find out. I use locally only, with cloud db so let me know how it goes.
+
 ## What does it do?
 
 - 📊 **Track Subscriptions**: Add all your family's shared services (streaming, music, storage, etc.)
@@ -33,6 +37,8 @@ Perfect for families and friends splitting costs on Netflix, Spotify, Disney+, Y
 - **Composer**
 - **Node.js and npm** (required for frontend assets)
 - **SQLite** (or Turso/Libsql account)
+
+
 
 ## Quick Setup
 
@@ -80,6 +86,16 @@ DB_FOREIGN_KEYS=true
 ```
 
 **Option B: Libsql/Turso (Cloud, but you need turso then)**
+
+Enable FFI
+/etc/php/php.ini
+```
+extension=ffi
+```
+and
+```
+ffi.enable=true
+```
 
 Update your `.env`:
 
