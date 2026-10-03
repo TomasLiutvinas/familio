@@ -158,6 +158,9 @@ And change files. Break stuff.
 4. **Track Charges**: Enter what it will cost or did cost for the year
 5. **Log Payments**: Mark when members pay their share
 
+See [price changes and pending payments](docs/subscription-prices.md) for mid-year
+rate changes, remaining member shares and the collapsible payment history.
+
 The dashboard will show you a clear overview of all subscriptions, upcoming charges, and payment status.
 
 ## Contributing

@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources\MemberPayments\Schemas;
 
+use App\Models\SubscriptionCharge;
+use App\Services\ChargeBalances;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
-use App\Models\SubscriptionCharge;
 
 class MemberPaymentForm
 {
@@ -35,37 +37,18 @@ class MemberPaymentForm
                     ->preload()
                     ->label('Charge')
                     ->live()
-                    ->afterStateUpdated(function ($state, callable $set) {
-                        if (!$state) {
-                            $set('amount_eur', null);
-                            return;
-                        }
-
-                        $charge = SubscriptionCharge::with('subscription.members')
-                            ->find($state);
-
-                        if (!$charge || !$charge->subscription) {
-                            return;
-                        }
-
-                        $membersCount = $charge->subscription->members->count();
-                        if ($membersCount <= 0) {
-                            return;
-                        }
-
-                        // float division for euros
-                        $perMember = $charge->amount_eur / $membersCount;
-
-                        // format nicely
-                        $set('amount_eur', number_format($perMember, 2, '.', ''));
-                    }),
+                    ->required()
+                    ->afterStateUpdated(fn (Get $get, callable $set) => self::suggestRemaining($get, $set)),
 
                 Select::make('person_id')
                     ->relationship('person', 'name')
-                    ->required(),
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(fn (Get $get, callable $set) => self::suggestRemaining($get, $set)),
 
                 TextInput::make('amount_eur')
-                    ->label('Price (€)')
+                    ->label('Payment (€)')
+                    ->helperText('Suggested amount is this person’s remaining share; you can record a partial payment.')
                     ->numeric()
                     ->step('0.01')
                     ->required(),
@@ -78,5 +61,18 @@ class MemberPaymentForm
                     ->columnSpanFull()
                     ->nullable(),
             ]);
+    }
+
+    private static function suggestRemaining(Get $get, callable $set): void
+    {
+        $charge = $get('charge_id') ? SubscriptionCharge::find($get('charge_id')) : null;
+        $personId = $get('person_id');
+        if (! $charge || ! $personId) {
+            $set('amount_eur', null);
+
+            return;
+        }
+        $balance = app(ChargeBalances::class)->forCharge($charge)->get($personId);
+        $set('amount_eur', $balance ? number_format($balance['outstanding_cents'] / 100, 2, '.', '') : null);
     }
 }

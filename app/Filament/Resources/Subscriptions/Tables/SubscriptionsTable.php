@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Subscriptions\Tables;
 
+use App\Filament\Actions\ChangeSubscriptionPrice;
 use App\Models\Subscription;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -85,6 +86,7 @@ class SubscriptionsTable
             ->filters([])
             ->recordActions([
                 EditAction::make(),
+                ChangeSubscriptionPrice::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

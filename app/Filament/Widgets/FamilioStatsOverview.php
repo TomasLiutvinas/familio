@@ -2,10 +2,10 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\MemberPayment;
 use App\Models\Person;
 use App\Models\Subscription;
 use App\Models\SubscriptionCharge;
+use App\Services\ChargeBalances;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -19,24 +19,22 @@ class FamilioStatsOverview extends BaseWidget
         // Active subscriptions
         $activeSubscriptions = Subscription::query()
             ->where(function ($query) {
-                $query->whereNull("ended_on")->orWhere("ended_on", ">=", now());
+                $query->whereNull('ended_on')->orWhere('ended_on', '>=', now());
             })
             ->count();
 
         // Total unpaid balance (charges - payments)
-        $totalCharges = SubscriptionCharge::sum("amount_eur");
-        $totalPayments = MemberPayment::sum("amount_eur");
-        $unpaidBalance = $totalCharges - $totalPayments;
+        $unpaidBalance = app(ChargeBalances::class)->pendingByPerson()->sum('total_cents') / 100;
 
         // Annual costs this year vs last year
         $costsThisYear = SubscriptionCharge::where(
-            "period_year",
+            'period_year',
             $currentYear,
-        )->sum("amount_eur");
+        )->sum('amount_eur');
         $costsLastYear = SubscriptionCharge::where(
-            "period_year",
+            'period_year',
             $lastYear,
-        )->sum("amount_eur");
+        )->sum('amount_eur');
 
         $costChange =
             $costsLastYear > 0
@@ -47,45 +45,45 @@ class FamilioStatsOverview extends BaseWidget
         $totalPeople = Person::count();
 
         return [
-            Stat::make("Active Subscriptions", $activeSubscriptions)
-                ->description("Currently running")
-                ->descriptionIcon("heroicon-m-play-circle")
-                ->color("success"),
+            Stat::make('Active Subscriptions', $activeSubscriptions)
+                ->description('Currently running')
+                ->descriptionIcon('heroicon-m-play-circle')
+                ->color('success'),
 
-            Stat::make("Unpaid Balance", "€" . number_format($unpaidBalance, 2))
+            Stat::make('Unpaid Balance', '€'.number_format($unpaidBalance, 2))
                 ->description(
                     $unpaidBalance > 0
-                        ? "Still needs to be collected"
-                        : "All settled up!",
+                        ? 'Still needs to be collected'
+                        : 'All settled up!',
                 )
                 ->descriptionIcon(
                     $unpaidBalance > 0
-                        ? "heroicon-m-exclamation-triangle"
-                        : "heroicon-m-check-circle",
+                        ? 'heroicon-m-exclamation-triangle'
+                        : 'heroicon-m-check-circle',
                 )
-                ->color($unpaidBalance > 0 ? "danger" : "success"),
+                ->color($unpaidBalance > 0 ? 'danger' : 'success'),
 
             Stat::make(
                 "Annual Costs {$currentYear}",
-                "€" . number_format($costsThisYear, 2),
+                '€'.number_format($costsThisYear, 2),
             )
                 ->description(
                     sprintf(
                         "%s%.1f%% vs {$lastYear}",
-                        $costChange >= 0 ? "+" : "",
+                        $costChange >= 0 ? '+' : '',
                         abs($costChange),
                     ),
                 )
                 ->descriptionIcon(
                     $costChange >= 0
-                        ? "heroicon-m-arrow-trending-up"
-                        : "heroicon-m-arrow-trending-down",
+                        ? 'heroicon-m-arrow-trending-up'
+                        : 'heroicon-m-arrow-trending-down',
                 )
-                ->color("warning"),
+                ->color('warning'),
 
-            Stat::make("Family Members", $totalPeople)
-                ->description("Total people 🦎")
-                ->color("success"),
+            Stat::make('Family Members', $totalPeople)
+                ->description('Total people 🦎')
+                ->color('success'),
         ];
     }
 }
