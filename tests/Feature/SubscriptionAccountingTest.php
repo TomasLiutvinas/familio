@@ -2,9 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Filament\Resources\Subscriptions\Pages\ListSubscriptions;
 use App\Filament\Resources\MemberPayments\Pages\CreateMemberPayment;
 use App\Filament\Resources\SubscriptionCharges\Pages\CreateSubscriptionCharge;
+use App\Filament\Resources\Subscriptions\Pages\EditSubscription;
+use App\Filament\Resources\Subscriptions\Pages\ListSubscriptions;
 use App\Filament\Widgets\PendingPaymentsWidget;
 use App\Filament\Widgets\RecentPaymentsWidget;
 use App\Models\MemberPayment;
@@ -123,6 +124,20 @@ class SubscriptionAccountingTest extends TestCase
         }
         $this->assertEquals(240, $charge->fresh()->amount_eur);
         $this->assertEquals(240, $subscription->fresh()->default_amount_eur);
+    }
+
+    public function test_edit_form_keeps_the_new_default_after_price_change(): void
+    {
+        $subscription = $this->subscription();
+        $charge = $this->charge($subscription);
+        $this->login();
+        Livewire::test(EditSubscription::class, ['record' => $subscription->getRouteKey()])
+            ->callAction('changePrice', ['monthly_price' => 22, 'effective_from' => '2026-09-01'])
+            ->assertHasNoActionErrors()
+            ->assertSet('data.default_amount_eur', '264.00')
+            ->call('save');
+        $this->assertEquals(264, $subscription->fresh()->default_amount_eur);
+        $this->assertEquals(244, $charge->fresh()->amount_eur);
     }
 
     public function test_forms_suggest_remaining_share_and_new_annual_default(): void

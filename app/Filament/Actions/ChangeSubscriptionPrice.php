@@ -8,9 +8,11 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Validation\ValidationException;
+use Livewire\Component;
 
 class ChangeSubscriptionPrice
 {
@@ -50,8 +52,12 @@ class ChangeSubscriptionPrice
                     return implode(' ', $lines);
                 }),
             ])
-            ->action(function (Subscription $record, array $data): void {
+            ->action(function (Subscription $record, array $data, Component $livewire): void {
                 app(SubscriptionPriceChange::class)->apply($record, $data['effective_from'], (float) $data['monthly_price']);
+                if ($livewire instanceof EditRecord) {
+                    $livewire->getRecord()->refresh();
+                    $livewire->refreshFormData(['default_amount_eur']);
+                }
                 Notification::make()->title('Subscription price updated')->success()->send();
             });
     }
