@@ -13,7 +13,9 @@ return [
     |
     */
 
-    'release' => env('FAMILIO_RELEASE', 'development'),
+    'release' => is_file(base_path('RELEASE'))
+        ? trim(file_get_contents(base_path('RELEASE')))
+        : env('FAMILIO_RELEASE', 'development'),
 
     'name' => env('APP_NAME', 'Laravel'),
 
