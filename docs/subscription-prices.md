@@ -52,3 +52,17 @@ The extra November–December 2026 coverage adds €44, avoiding a gap before th
 January 2027 calendar year. Do not shorten an already paid charge to move its
 covered months into a new charge: that would make previously paid coverage look
 unpaid again. Keep it intact and add the uncovered bridge instead.
+
+## Planned charges
+
+Future collections can be marked **Planned** on their charge edit/create form.
+Planned charges remain visible with their coverage and price in the charges list,
+but are excluded from unpaid balances, pending member payments, annual cost totals
+and subscription cost comparisons. Price adjustments can still update planned
+prices. Use **Activate** on a planned row when you want collection to begin; this
+is a manual choice, not an automatic January date switch.
+
+The Spotify and YouTube January–December 2027 charges are planned. Existing
+payment entries are preserved. Charges with recorded payments cannot be changed
+to planned, and payments cannot be recorded against a planned charge until it is
+activated.

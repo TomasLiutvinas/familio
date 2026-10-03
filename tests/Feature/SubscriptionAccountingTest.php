@@ -4,8 +4,11 @@ namespace Tests\Feature;
 
 use App\Filament\Resources\MemberPayments\Pages\CreateMemberPayment;
 use App\Filament\Resources\SubscriptionCharges\Pages\CreateSubscriptionCharge;
+use App\Filament\Resources\SubscriptionCharges\Pages\ListSubscriptionCharges;
 use App\Filament\Resources\Subscriptions\Pages\EditSubscription;
 use App\Filament\Resources\Subscriptions\Pages\ListSubscriptions;
+use App\Filament\Widgets\ActiveSubscriptionsCharts;
+use App\Filament\Widgets\FamilioStatsOverview;
 use App\Filament\Widgets\PendingPaymentsWidget;
 use App\Filament\Widgets\RecentPaymentsWidget;
 use App\Models\MemberPayment;
@@ -124,6 +127,68 @@ class SubscriptionAccountingTest extends TestCase
         }
         $this->assertEquals(240, $charge->fresh()->amount_eur);
         $this->assertEquals(240, $subscription->fresh()->default_amount_eur);
+    }
+
+    public function test_planned_charges_are_excluded_until_explicit_activation(): void
+    {
+        $subscription = $this->subscription();
+        $active = $this->charge($subscription, 2026, 120);
+        $planned = $this->charge($subscription, 2027, 720);
+        $planned->update(['is_planned' => true, 'covered_from' => '2027-01-01', 'covered_until' => '2027-12-31']);
+        $balances = app(ChargeBalances::class);
+        $this->assertCount(0, $balances->forCharge($planned));
+        $this->assertSame(10000, $balances->pendingByPerson()->sum('total_cents'));
+        $this->assertEquals(120, SubscriptionCharge::included()->sum('amount_eur'));
+        $this->login();
+        Livewire::test(PendingPaymentsWidget::class)->assertDontSee('Jan 2027');
+        Livewire::test(ActiveSubscriptionsCharts::class)->assertSee('€1.67')->assertDontSee('€10.00');
+        $this->travelTo(now()->setYear(2027));
+        Livewire::test(FamilioStatsOverview::class)->assertSee('Annual Costs 2027')->assertSee('€0.00')->assertDontSee('€720.00');
+        Livewire::test(ListSubscriptionCharges::class)
+            ->assertSee('Planned')
+            ->assertSee('Not due')
+            ->callTableAction('activate', $planned)
+            ->assertHasNoActionErrors();
+        $this->assertFalse($planned->fresh()->is_planned);
+        $this->assertSame(70000, $balances->pendingByPerson()->sum('total_cents'));
+        $this->assertEquals(840, SubscriptionCharge::included()->sum('amount_eur'));
+    }
+
+    public function test_recorded_payments_cannot_be_hidden_by_planning_a_charge(): void
+    {
+        $subscription = $this->subscription();
+        $charge = $this->charge($subscription);
+        $member = $subscription->members()->where('person_id', '!=', $subscription->owner_id)->first();
+        $payment = MemberPayment::create(['charge_id' => $charge->id, 'person_id' => $member->person_id,
+            'amount_eur' => 10, 'paid_on' => '2025-11-02']);
+        try {
+            $charge->update(['is_planned' => true]);
+            $this->fail('Expected paid charge to remain active');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('is_planned', $exception->errors());
+        }
+        $this->assertFalse($charge->fresh()->is_planned);
+        $this->assertEquals(10, $payment->fresh()->amount_eur);
+    }
+
+    public function test_payments_require_a_planned_charge_to_be_activated_first(): void
+    {
+        $subscription = $this->subscription();
+        $charge = $this->charge($subscription, 2027);
+        $charge->update(['is_planned' => true]);
+        $member = $subscription->members()->where('person_id', '!=', $subscription->owner_id)->first();
+        try {
+            MemberPayment::create(['charge_id' => $charge->id, 'person_id' => $member->person_id,
+                'amount_eur' => 10, 'paid_on' => '2026-10-03']);
+            $this->fail('Expected planned charge to reject payment');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('charge_id', $exception->errors());
+        }
+        $this->assertEquals(0, $charge->payments()->count());
+        $charge->update(['is_planned' => false]);
+        MemberPayment::create(['charge_id' => $charge->id, 'person_id' => $member->person_id,
+            'amount_eur' => 10, 'paid_on' => '2026-10-03']);
+        $this->assertEquals(1, $charge->payments()->count());
     }
 
     public function test_price_change_respects_calendar_and_partial_coverage(): void

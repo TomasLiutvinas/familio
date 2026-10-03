@@ -8,6 +8,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
 class SubscriptionChargeForm
@@ -24,6 +25,9 @@ class SubscriptionChargeForm
                         $subscription = $state ? Subscription::find($state) : null;
                         $set('amount_eur', $subscription?->default_amount_eur);
                     }),
+                Toggle::make('is_planned')->label('Planned — excluded from calculations')
+                    ->default(false)
+                    ->helperText('Keep future charges visible without collecting them yet. Activate when you want them included.'),
                 TextInput::make('period_year')
                     ->default(now()->year)
                     ->helperText('The year the covered period starts.')

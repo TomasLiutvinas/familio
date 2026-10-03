@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Validation\ValidationException;
 
 class MemberPayment extends Model
 {
@@ -18,6 +19,15 @@ class MemberPayment extends Model
     protected $casts = [
         'paid_on' => 'date',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $payment): void {
+            if (SubscriptionCharge::find($payment->charge_id)?->is_planned) {
+                throw ValidationException::withMessages(['charge_id' => 'Activate this planned charge before recording a payment.']);
+            }
+        });
+    }
 
     public function charge(): BelongsTo
     {

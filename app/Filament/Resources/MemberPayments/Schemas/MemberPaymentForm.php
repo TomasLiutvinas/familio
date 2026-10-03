@@ -22,6 +22,7 @@ class MemberPaymentForm
                         name: 'charge',
                         titleAttribute: 'charge_date',
                         modifyQueryUsing: fn ($query) => $query
+                            ->included()
                             ->with('subscription')
                             ->orderByDesc('period_year'),
                     )

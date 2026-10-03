@@ -27,11 +27,11 @@ class FamilioStatsOverview extends BaseWidget
         $unpaidBalance = app(ChargeBalances::class)->pendingByPerson()->sum('total_cents') / 100;
 
         // Annual costs this year vs last year
-        $costsThisYear = SubscriptionCharge::where(
+        $costsThisYear = SubscriptionCharge::included()->where(
             'period_year',
             $currentYear,
         )->sum('amount_eur');
-        $costsLastYear = SubscriptionCharge::where(
+        $costsLastYear = SubscriptionCharge::included()->where(
             'period_year',
             $lastYear,
         )->sum('amount_eur');

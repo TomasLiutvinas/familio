@@ -10,6 +10,9 @@ class ChargeBalances
     /** Exact cents: keep partial payments outstanding and allocate remainder cents once. */
     public function forCharge(SubscriptionCharge $charge): Collection
     {
+        if ($charge->is_planned) {
+            return collect();
+        }
         $charge->loadMissing(['subscription.members.person', 'payments']);
         $members = $charge->subscription?->members->sortBy('person_id')->values() ?? collect();
         if ($members->isEmpty()) {
@@ -40,7 +43,7 @@ class ChargeBalances
     public function pendingByPerson(): Collection
     {
         $pending = collect();
-        $charges = SubscriptionCharge::with(['subscription.members.person', 'payments'])->get();
+        $charges = SubscriptionCharge::included()->with(['subscription.members.person', 'payments'])->get();
         foreach ($charges as $charge) {
             foreach ($this->forCharge($charge) as $personId => $balance) {
                 if ($balance['outstanding_cents'] === 0) {
