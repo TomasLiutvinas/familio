@@ -26,6 +26,10 @@ class SubscriptionChargesTable
                     ->label('Year')
                     ->sortable(),
 
+                TextColumn::make('coverage')
+                    ->label('Covers')
+                    ->getStateUsing(fn (SubscriptionCharge $record) => $record->coverageLabel()),
+
                 // total charge
                 TextColumn::make('amount_eur')
                     ->label('Price (€)')

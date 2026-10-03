@@ -50,7 +50,7 @@ class ChargeBalances
                 $person['total_cents'] += $balance['outstanding_cents'];
                 $person['charges'][] = [
                     'charge_id' => $charge->id,
-                    'label' => $charge->subscription->service_name.' · '.$charge->period_year,
+                    'label' => $charge->subscription->service_name.' · '.$charge->coverageLabel(),
                     'outstanding_cents' => $balance['outstanding_cents'],
                 ];
                 $pending->put($personId, $person);

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\SubscriptionCharges\Schemas;
 
 use App\Models\Subscription;
+use Carbon\CarbonImmutable;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -25,9 +26,25 @@ class SubscriptionChargeForm
                     }),
                 TextInput::make('period_year')
                     ->default(now()->year)
-                    ->helperText('Year this collection starts; annual periods use the subscription’s anniversary month.')
+                    ->helperText('The year the covered period starts.')
                     ->required()
                     ->numeric(),
+                DatePicker::make('covered_from')
+                    ->label('Covered from')->nullable()->requiredWith('covered_until')
+                    ->helperText('Optional for old annual charges; set both dates for a shorter or calendar-year collection.')
+                    ->rules([fn () => function (string $attribute, $value, $fail): void {
+                        if ($value && CarbonImmutable::parse($value)->day !== 1) {
+                            $fail('Coverage must start on the first day of a month.');
+                        }
+                    }]),
+                DatePicker::make('covered_until')
+                    ->label('Covered through')->nullable()->requiredWith('covered_from')
+                    ->afterOrEqual('covered_from')
+                    ->rules([fn () => function (string $attribute, $value, $fail): void {
+                        if ($value && ! CarbonImmutable::parse($value)->isLastOfMonth()) {
+                            $fail('Coverage must end on the last day of a month.');
+                        }
+                    }]),
                 DatePicker::make('charge_date')
                     ->label('Charge date:')
                     ->default(fn () => now())

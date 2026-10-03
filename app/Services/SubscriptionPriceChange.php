@@ -27,10 +27,11 @@ class SubscriptionPriceChange
         $oldMonthlyCents = (int) round($oldAnnualCents / 12);
         $changes = [];
         foreach ($subscription->charges as $charge) {
-            $start = CarbonImmutable::create($charge->period_year, $subscription->started_on->month, 1);
+            $start = $charge->coverageStart()->startOfMonth();
+            $end = $charge->coverageEnd()->startOfMonth();
             $months = 0;
-            for ($month = 0; $month < 12; $month++) {
-                if ($start->addMonths($month)->gte($effective)) {
+            for ($month = $start; $month->lte($end); $month = $month->addMonth()) {
+                if ($month->gte($effective)) {
                     $months++;
                 }
             }
@@ -40,7 +41,7 @@ class SubscriptionPriceChange
                 throw ValidationException::withMessages(['monthly_price' => 'This adjustment would make an annual charge negative. Edit that charge directly instead.']);
             }
             if ($before !== $after) {
-                $changes[] = ['id' => $charge->id, 'year' => $charge->period_year, 'months' => $months,
+                $changes[] = ['id' => $charge->id, 'year' => $charge->period_year, 'coverage' => $charge->coverageLabel(), 'months' => $months,
                     'before_cents' => $before, 'after_cents' => $after];
             }
         }

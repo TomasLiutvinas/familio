@@ -126,6 +126,42 @@ class SubscriptionAccountingTest extends TestCase
         $this->assertEquals(240, $subscription->fresh()->default_amount_eur);
     }
 
+    public function test_price_change_respects_calendar_and_partial_coverage(): void
+    {
+        $subscription = $this->subscription();
+        $subscription->update(['default_amount_eur' => 264]);
+        $past = $this->charge($subscription, 2025, 40);
+        $past->update(['covered_from' => '2025-11-01', 'covered_until' => '2025-12-31']);
+        $early = $this->charge($subscription, 2026, 160);
+        $early->update(['covered_from' => '2026-01-01', 'covered_until' => '2026-08-31']);
+        $late = $this->charge($subscription, 2026, 88);
+        $late->update(['covered_from' => '2026-09-01', 'covered_until' => '2026-12-31']);
+        $future = $this->charge($subscription, 2027, 264);
+        $future->update(['covered_from' => '2027-01-01', 'covered_until' => '2027-12-31']);
+        $preview = app(SubscriptionPriceChange::class)->preview($subscription, '2026-11-01', 24);
+        $this->assertSame([9200, 28800], array_column($preview['changes'], 'after_cents'));
+        $this->assertSame([2, 12], array_column($preview['changes'], 'months'));
+        $this->assertSame('Sep 2026 – Dec 2026', $late->coverageLabel());
+        app(SubscriptionPriceChange::class)->apply($subscription, '2026-11-01', 24);
+        $this->assertEquals(40, $past->fresh()->amount_eur);
+        $this->assertEquals(160, $early->fresh()->amount_eur);
+        $this->assertEquals(92, $late->fresh()->amount_eur);
+        $this->assertEquals(288, $future->fresh()->amount_eur);
+        $this->login();
+        Livewire::test(PendingPaymentsWidget::class)->assertSee('Sep 2026')->assertSee('Dec 2026');
+    }
+
+    public function test_old_paid_charges_keep_their_original_anniversary_coverage(): void
+    {
+        $subscription = $this->subscription();
+        $subscription->update(['started_on' => '2023-05-01']);
+        $charge = $this->charge($subscription, 2023, 156);
+        $charge->update(['charge_date' => '2025-05-01']);
+        $this->assertSame('May 2023 – Apr 2024', $charge->coverageLabel());
+        $this->assertNull($charge->covered_from);
+        $this->assertNull($charge->covered_until);
+    }
+
     public function test_edit_form_keeps_the_new_default_after_price_change(): void
     {
         $subscription = $this->subscription();

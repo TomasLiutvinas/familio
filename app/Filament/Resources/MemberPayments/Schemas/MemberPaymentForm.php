@@ -27,8 +27,8 @@ class MemberPaymentForm
                     )
                     ->getOptionLabelFromRecordUsing(
                         fn (SubscriptionCharge $record) => sprintf(
-                            '%d – %s (€%s)',
-                            $record->period_year,
+                            '%s – %s (€%s)',
+                            $record->coverageLabel(),
                             $record->subscription?->service_name ?? '???',
                             number_format($record->amount_eur, 2, '.', '')
                         )

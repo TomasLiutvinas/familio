@@ -42,8 +42,8 @@ class ChangeSubscriptionPrice
                     }
                     $lines = ['Future full-year price: €'.number_format($preview['annual_cents'] / 100, 2).'.'];
                     foreach ($preview['changes'] as $change) {
-                        $lines[] = sprintf('%d collection: €%.2f → €%.2f (%d months at the new rate).',
-                            $change['year'], $change['before_cents'] / 100, $change['after_cents'] / 100, $change['months']);
+                        $lines[] = sprintf('%s collection: €%.2f → €%.2f (%d months at the new rate).',
+                            $change['coverage'], $change['before_cents'] / 100, $change['after_cents'] / 100, $change['months']);
                     }
                     if (! $preview['changes']) {
                         $lines[] = 'Existing annual collections are unchanged.';
