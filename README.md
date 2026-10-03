@@ -138,6 +138,10 @@ Visit **http://localhost:8000** to see a nice page that nobody really cares abou
 
 Visit **http://localhost:8000/admin** and log in with your admin credentials.
 
+## Permanent home-server deployment
+
+See [Sern deployment](docs/sern.md) for the persistent LAN instance and release workflow.
+
 ## Development
 
 ```bash

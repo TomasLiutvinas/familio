@@ -1,0 +1,45 @@
+name: Familio Sern release
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: familio-sern-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: ffi, intl, pdo_sqlite, sqlite3, zip
+          ini-values: ffi.enable=true
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: composer install --prefer-dist --no-interaction
+      - run: php vendor/bin/phpunit
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+      - run: bash scripts/sern-build.sh "$RUNNER_TEMP/familio-release"
+      - name: Publish verified release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="sern-php-${GITHUB_SHA}"
+          gh release create "$tag" "$RUNNER_TEMP/familio-release/familio-linux-amd64.tar.gz" "$RUNNER_TEMP/familio-release/SHA256SUMS" --target "$GITHUB_SHA" --title "Sern Familio ${GITHUB_SHA:0:7}" --notes "Checksummed Laravel application release for the private Sern LAN deployment."

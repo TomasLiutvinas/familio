@@ -13,6 +13,8 @@ return [
     |
     */
 
+    'release' => env('FAMILIO_RELEASE', 'development'),
+
     'name' => env('APP_NAME', 'Laravel'),
 
     /*
