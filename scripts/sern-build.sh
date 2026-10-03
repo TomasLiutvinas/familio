@@ -22,7 +22,7 @@ printf '%s\n' "$version" > RELEASE
 rm -rf node_modules tests .github storage
 rm -f public/hot .env
 mkdir -p storage/framework/{cache/data,sessions,views} storage/logs storage/app/{private,public}
-tar -czf "$output/familio-linux-amd64.tar.gz" app
+tar -czf "$output/familio-linux-amd64.tar.gz" -C "$work" app
 cd "$output"
 sha256sum familio-linux-amd64.tar.gz > SHA256SUMS
 printf 'Built Familio %s in %s\n' "$version" "$output"
